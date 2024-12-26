@@ -1,0 +1,16 @@
+pub enum Packet {
+    Create,
+    Paint,
+    MouseEnter,
+    MouseLeave,
+    MouseMove,
+    MouseDown,
+    MouseUp,
+    KeyDown,
+    KeyUp,
+    Move,
+    Resize,
+    Suspend,
+    Resume,
+    Close,
+}

@@ -1,0 +1,12 @@
+[package]
+name = "Prism"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+signal-hook = "0.3"
+rusttype = "0.9.3"
+evdev = "0.12.2"
+# temp
+glfw = "*"
+gl = "*"
