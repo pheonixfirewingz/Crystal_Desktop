@@ -6,7 +6,11 @@ edition = "2021"
 [dependencies]
 signal-hook = "0.3"
 rusttype = "0.9.3"
+nalgebra = "0.33.2"
+png = "0.17.16"
+chrono = "0.4.39"
 evdev = "0.12.2"
+gl = "0.14"
+libloading = "0.7"
 # temp
 glfw = "*"
-gl = "*"
