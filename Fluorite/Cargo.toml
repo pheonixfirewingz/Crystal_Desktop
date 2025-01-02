@@ -1,0 +1,8 @@
+[package]
+name = "fluorite"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+lib_crystal_matrix = {path = "../LibCrystalMatrix"}

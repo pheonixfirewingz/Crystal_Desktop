@@ -1,0 +1,16 @@
+[workspace]
+resolver = "3"
+members = [
+    "Compositor",
+    "Fluorite",
+    "LibCrystalMatrix",
+]
+
+[workspace.package]
+version = "0.1.0"
+authors = ["luke shore <crystal_desktop.unglue654@passmail.net>"]
+edition = "2024"
+
+[workspace.metadata]
+name = "crystal_desktop"
+description = "A multi-crate desktop"
