@@ -1,42 +1,16 @@
 use crate::common::ScreenSize;
 use gl::types::{GLint, GLuint};
-use std::any::Any;
 use std::ptr;
 
-pub enum TextureData {
-    None,
-    OPENGL(GLuint),
-}
-
 pub struct Texture {
-    data: TextureData,
+    texture_id: GLuint,
     width: ScreenSize,
     height: ScreenSize,
     owns_texture: bool,
 }
 
 impl Texture {
-    #[inline]
-    pub fn new(data: TextureData, width: ScreenSize, height: ScreenSize) -> Self {
-        Self {
-            data,
-            width,
-            height,
-            owns_texture: false,
-        }
-    }
-
-    #[inline]
-    pub fn none() -> Self {
-        Self {
-            data: TextureData::None,
-            width: 0,
-            height: 0,
-            owns_texture: true,
-        }
-    }
-
-    pub fn opengl(width: ScreenSize, height: ScreenSize) -> Self {
+    pub fn new(width: ScreenSize, height: ScreenSize) -> Self {
         unsafe {
             let mut texture = gl::INVALID_INDEX;
             gl::GenTextures(1, &mut texture);
@@ -58,29 +32,47 @@ impl Texture {
             );
 
             Self {
-                data: TextureData::OPENGL(texture),
+                texture_id: texture,
                 width,
                 height,
                 owns_texture: true,
             }
         }
     }
+    pub fn id(&self) -> GLuint {
+        self.texture_id
+    }
+
+    pub fn not_owned(texture_id: GLuint,width: ScreenSize,height: ScreenSize) -> Self {
+        Self {
+            texture_id,
+            width,
+            height,
+            owns_texture: false,
+        }
+    }
+
+    pub fn not_owned_from(texture: &Self) -> Self {
+        Self {
+            texture_id: texture.texture_id,
+            width: texture.width,
+            height: texture.height,
+            owns_texture: false,
+        }
+    }
 
     pub fn read(&self) -> Vec<u8> {
-        match &self.data {
-            TextureData::None => vec![],
-            TextureData::OPENGL(opengl) => unsafe {
-                let mut buffer = vec![0u8; (self.width * self.height * 4) as usize];
-                gl::BindTexture(gl::TEXTURE_2D, *opengl);
-                gl::GetTexImage(
-                    gl::TEXTURE_2D,
-                    0,
-                    gl::RGBA,
-                    gl::UNSIGNED_BYTE,
-                    buffer.as_mut_ptr() as *mut _,
-                );
-                buffer
-            },
+        unsafe {
+            let mut buffer = vec![0u8; (self.width * self.height * 4) as usize];
+            gl::BindTexture(gl::TEXTURE_2D, self.texture_id);
+            gl::GetTexImage(
+                gl::TEXTURE_2D,
+                0,
+                gl::RGBA,
+                gl::UNSIGNED_BYTE,
+                buffer.as_mut_ptr() as *mut _,
+            );
+            buffer
         }
     }
 
@@ -98,22 +90,19 @@ impl Texture {
             } else {
                 self.height
             };
-            match &self.data {
-                TextureData::None => {}
-                TextureData::OPENGL(opengl) => unsafe {
-                    gl::BindTexture(gl::TEXTURE_2D, *opengl);
-                    gl::TexImage2D(
-                        gl::TEXTURE_2D,
-                        0,
-                        0,
-                        0,
-                        width as i32,
-                        height as i32,
-                        gl::RGBA,
-                        gl::UNSIGNED_BYTE,
-                        data.as_ptr() as *const _,
-                    );
-                },
+            unsafe {
+                gl::BindTexture(gl::TEXTURE_2D, self.texture_id);
+                gl::TexImage2D(
+                    gl::TEXTURE_2D,
+                    0,
+                    0,
+                    0,
+                    width as i32,
+                    height as i32,
+                    gl::RGBA,
+                    gl::UNSIGNED_BYTE,
+                    data.as_ptr() as *const _,
+                );
             }
         }
     }
@@ -126,29 +115,11 @@ impl Texture {
         self.height
     }
 
-    pub fn data(&self) -> &TextureData {
-        &self.data
-    }
-    
     pub fn cleanup(&mut self) {
-        if let TextureData::OPENGL(texture) = &self.data {
-            if self.owns_texture {
-                unsafe {
-                    gl::DeleteTextures(1, texture);
-                }
+        if self.owns_texture {
+            unsafe {
+                gl::DeleteTextures(1, &self.texture_id);
             }
         }
-    }
-}
-
-impl PartialEq for Texture {
-    fn eq(&self, other: &Self) -> bool {
-        self.data.type_id() == other.data.type_id()
-    }
-}
-
-impl Drop for Texture {
-    fn drop(&mut self) {
-        self.cleanup();
     }
 }

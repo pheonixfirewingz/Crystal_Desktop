@@ -1,14 +1,14 @@
 //TODO
 
 use std::sync::{Arc, RwLock};
-use std::sync::atomic::{AtomicBool, Ordering};
-use evdev::{Device, InputEventKind};
+use std::sync::atomic::{AtomicBool};
+//use evdev::{Device, InputEventKind};
 use crate::DisplayServer;
 
-pub fn handle_hardware(display_server: Arc<RwLock<DisplayServer>>, running: Arc<AtomicBool>) {
+pub fn handle_hardware(_display_server: Arc<RwLock<DisplayServer>>, _running: Arc<AtomicBool>) {
     //TODO: this needs alot of work
     return;
-    // Open mouse and keyboard devices
+   /* // Open mouse and keyboard devices
     let mut lid_switch = Device::open("/dev/input/event0").expect("failed to open laptop lid switch");
     let mut mouse = Device::open("/dev/input/event5").expect("failed to open mouse");
     let mut keyboard = Device::open("/dev/input/event3").expect("failed to open keyboard");
@@ -80,9 +80,9 @@ pub fn handle_hardware(display_server: Arc<RwLock<DisplayServer>>, running: Arc<
             }
         }
     }
-    println!("Exiting handle_hardware loop.");
+    println!("Exiting handle_hardware loop.");*/
 }
 
-pub fn start_screen(dm_server: Arc<RwLock<DisplayServer>>, shutdown: Arc<AtomicBool>) {
+pub fn start_screen(_dm_server: Arc<RwLock<DisplayServer>>, _shutdown: Arc<AtomicBool>) {
     
 }

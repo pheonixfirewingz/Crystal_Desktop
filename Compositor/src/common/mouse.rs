@@ -1,11 +1,11 @@
-use crate::common::{SScreenSize, ScreenSize};
+use crate::common::ScreenSize;
 
 #[derive(Debug)]
 pub struct Mouse {
     x: ScreenSize,
     y: ScreenSize,
-    rel_x: SScreenSize,
-    rel_y: SScreenSize,
+    rel_x: ScreenSize,
+    rel_y: ScreenSize,
     wheel_delta_x: f32,
     wheel_delta_y: f32,
     button_left: bool,
@@ -48,20 +48,25 @@ impl Mouse {
     pub fn get_y(&self) -> ScreenSize {
         self.y
     }
-    pub fn get_rel_x(&self) -> SScreenSize {
+    pub fn get_rel_x(&self) -> ScreenSize {
         self.rel_x
     }
-    pub fn get_rel_y(&self) -> SScreenSize {
+    pub fn get_rel_y(&self) -> ScreenSize {
         self.rel_y
     }
-    pub fn add_x(&mut self, x: SScreenSize) {
+    
+    pub fn add_wheel_delta(&mut self,x:f32, y:f32) {
+        self.wheel_delta_x += x;
+        self.wheel_delta_y += y;
+    }
+    
+    pub fn add_position(&mut self, x: ScreenSize,y: ScreenSize) {
         self.rel_x = x;
-        self.x = (self.x as SScreenSize + x) as ScreenSize;
-    }
-    pub fn add_y(&mut self, y: SScreenSize) {
+        self.x += x;
         self.rel_y = y;
-        self.y = (self.y as SScreenSize + y) as ScreenSize;
+        self.y += y;
     }
+    
     pub fn set_left_button(&mut self, button: bool) {
         self.button_left = button;
     }

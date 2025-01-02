@@ -4,6 +4,7 @@ use libloading::Library;
 
 pub mod framebuffer;
 pub mod texture;
+pub mod shaderprogram;
 
 static GL_LOADED: AtomicBool = AtomicBool::new(false);
 pub fn init_gl() {
