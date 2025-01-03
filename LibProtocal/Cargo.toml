@@ -1,0 +1,9 @@
+[package]
+name = "libprotocol"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde = { version = "1.0.217", features = ["derive"] }
+bincode = "1.3.3"

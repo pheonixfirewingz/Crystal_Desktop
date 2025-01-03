@@ -5,6 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/Compositor/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Fluorite/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/LibCrystalMatrix/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/LibProtocal/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/Compositor/target" />
       <excludeFolder url="file://$MODULE_DIR$/LibCrystalMatrix/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
