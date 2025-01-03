@@ -1,14 +1,16 @@
 use crate::net::connection_state::ConnectionStats;
 use crate::net::error::UnixSocketError;
-use crate::net::packet::Packet;
-use crate::net::{PacketHandler, packet, WINDOW_UNIX_SOCKET_NAME};
+use crate::net::Packet;
+use crate::net::{PacketHandler};
+use libprotocol::Packet::{APIVersion, Close, RequestAPIVersion};
+use libprotocol::{PROTOCOL_VERSION, WINDOW_UNIX_SOCKET_NAME};
 use std::collections::HashMap;
-use std::{fs, io};
-use std::io::{ErrorKind, Read, Write};
+use std::io::ErrorKind;
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
+use std::{fs, io};
 
 pub struct ServerState {
     listener: UnixListener,
@@ -90,47 +92,24 @@ impl ServerState {
         window_id: u64,
         stream: &mut UnixStream,
     ) -> crate::net::Result<()> {
-        let mut size_buffer = [0u8; 4];
-        let mut buffer = Vec::new();
-
-        match stream.read_exact(&mut size_buffer) {
-            Ok(_) => {
-                let size = u32::from_le_bytes(size_buffer) as usize;
-                if size > 1024 * 1024 * 10 {
-                    return Err(UnixSocketError::Io(io::Error::new(
-                        ErrorKind::InvalidData,
-                        "Message size too large",
-                    )));
-                }
-
-                buffer.resize(size, 0);
-                stream.read_exact(&mut buffer)?;
-
-                let packet = packet::deserialize(&buffer)
-                    .map_err(|e| UnixSocketError::SerializationError(e.to_string()))?;
-
-                if packet == Packet::RequestAPIVersion {
-                    let (major, minor, patch) = packet::PROTOCOL_VERSION;
-                    let packet = Packet::APIVersion {
-                        major,
-                        minor,
-                        patch,
-                    };
-                    self.send_packet(window_id, packet)?;
-                }
-
-                if let Ok(mut handler) = self.packet_handler.lock() {
-                    if let Some(packet) = handler.handle_packet(window_id, packet)? {
-                        let data = packet::serialize(&packet)
-                            .map_err(|e| UnixSocketError::SerializationError(e.to_string()))?;
-                        stream.write_all(&data)?;
-                    }
-                }
-            }
-            Err(e) if e.kind() == ErrorKind::WouldBlock => {}
-            Err(e) => return Err(UnixSocketError::Io(e)),
+        let packet = receive_packet(stream)?;
+        if packet == RequestAPIVersion {
+            let (major, minor, patch) = PROTOCOL_VERSION;
+            let packet = APIVersion {
+                major,
+                minor,
+                patch,
+            };
+            send_packet(stream, &packet)?;
+            return Ok(());
         }
-
+        let mut packet_out: Option<Packet> = None;
+        if let Ok(mut handler) = self.packet_handler.lock() {
+            packet_out = handler.handle_packet(window_id, packet)?
+        }
+        if let Some(packet_out) = packet_out {
+            send_packet(stream, &packet_out)?;
+        }
         Ok(())
     }
 
@@ -156,7 +135,7 @@ impl ServerState {
 
     fn handle_connection_failure(&mut self, window_id: u64) -> crate::net::Result<()> {
         println!("WARN:Handling connection failure for window {}", window_id);
-        let failure_packet = Packet::Close { window_id };
+        let failure_packet = Close { window_id };
         self.broadcast_to_others(window_id, &failure_packet)?;
         self.connections.remove(&window_id);
         println!("Connection failure handled for window {}", window_id);
@@ -176,9 +155,12 @@ impl ServerState {
             stream.set_nonblocking(false)?;
             stream.set_read_timeout(Some(Duration::from_secs(30)))?;
             stream.set_write_timeout(Some(Duration::from_secs(5)))?;
-            let ping = Packet::RequestAPIVersion;
-            if let Err(e) = self.send_packet(window_id, ping) {
-                println!("WARN: Recovery attempt failed for window {}: {}", window_id, e);
+            let ping = RequestAPIVersion;
+            if let Err(e) = send_packet(stream, &ping) {
+                println!(
+                    "WARN: Recovery attempt failed for window {}: {}",
+                    window_id, e
+                );
                 return Ok(false);
             }
 
@@ -191,36 +173,21 @@ impl ServerState {
         }
     }
 
-    pub fn send_packet(&mut self, window_id: u64, packet: Packet) -> crate::net::Result<()> {
-        let (stream,_) = self.connections.get_mut(&window_id)
-            .ok_or(UnixSocketError::ConnectionNotFound(window_id))?;
-
-        let data = packet::serialize(&packet).map_err(|e|
-            UnixSocketError::SerializationError(e.to_string())
-        )?;
-        
-        stream.write_all(&data).map_err(|e| {
-            UnixSocketError::Io(io::Error::new(
-                e.kind(),
-                format!("Failed to write packet data to window {}: {}", window_id, e)
-            ))
-        })?;
-
-        stream.flush().map_err(|e| {
-            UnixSocketError::Io(io::Error::new(
-                e.kind(),
-                format!("Failed to flush stream for window {}: {}", window_id, e)
-            ))
-        })?;
-
-        Ok(())
+    fn get_stream(
+        &mut self,
+        window_id: u64,
+    ) -> crate::net::Result<&mut (UnixStream, ConnectionStats)> {
+        self.connections
+            .get_mut(&window_id)
+            .ok_or(UnixSocketError::ConnectionNotFound(window_id))
     }
-    
+
     fn broadcast_to_others(&mut self, sender_id: u64, packet: &Packet) -> crate::net::Result<()> {
         let connections = std::mem::take(&mut self.connections);
         for (&window_id, _) in &connections {
             if window_id != sender_id {
-                if let Err(e) = self.send_packet(window_id, packet.clone()) {
+                let (stream,_) = self.get_stream(window_id)?;
+                if let Err(e) = send_packet(stream, &packet) {
                     println!("WARN: Failed to broadcast to window {}: {}", window_id, e);
                 }
             }
@@ -228,14 +195,14 @@ impl ServerState {
         self.connections = connections;
         Ok(())
     }
-    
+
     pub fn cleanup(&mut self) -> crate::net::Result<()> {
         println!("Starting compositor cleanup");
-        
+
         for (window_id, (_, _)) in self.connections.drain() {
             println!("Closing connection for window {}", window_id);
         }
-        
+
         if Path::new(&WINDOW_UNIX_SOCKET_NAME).exists() {
             fs::remove_file(&WINDOW_UNIX_SOCKET_NAME).map_err(|e| {
                 eprintln!("Failed to remove socket file: {}", e);
@@ -246,4 +213,17 @@ impl ServerState {
         println!("Compositor cleanup completed successfully");
         Ok(())
     }
+}
+
+fn receive_packet(stream: &mut UnixStream) -> io::Result<Packet> {
+    let  ret = libprotocol::receive_packet(stream);
+    if let Ok(packet) = &ret {
+        println!("LibCrystalMatrix: Received packet: {:?}", packet);
+    }
+    ret
+}
+
+fn send_packet(stream: &mut UnixStream, packet: &Packet) -> io::Result<()> {
+    println!("LibCrystalMatrix: Sending packet {:?}", packet);
+    libprotocol::send_packet(stream, packet)
 }

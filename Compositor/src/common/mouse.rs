@@ -1,4 +1,4 @@
-use crate::common::ScreenSize;
+use libprotocol::ScreenSize;
 
 #[derive(Debug)]
 pub struct Mouse {

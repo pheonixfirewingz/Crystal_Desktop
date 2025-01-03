@@ -1,8 +1,8 @@
-use crate::common::ScreenSize;
 use crate::render::api::texture::Texture;
 use gl::types::{GLint, GLsizei, GLuint};
 use gl::*;
 use std::ptr::null;
+use libprotocol::ScreenSize;
 
 pub struct FrameBuffer {
     pub texture: GLuint,

@@ -1,4 +1,4 @@
-use crate::common::ScreenSize;
+use libprotocol::ScreenSize;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug)]

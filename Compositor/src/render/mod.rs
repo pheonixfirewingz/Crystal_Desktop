@@ -1,4 +1,3 @@
-use crate::common::ScreenSize;
 use crate::render::api::framebuffer::FrameBuffer;
 use crate::render::api::init_gl;
 use crate::render::api::shaderprogram::ShaderProgram;
@@ -10,6 +9,7 @@ use crate::{common, math};
 use gl::{BLEND, ONE_MINUS_SRC_ALPHA, SRC_ALPHA};
 use nalgebra::{Matrix4, Vector2, Vector3};
 use std::collections::HashMap;
+use libprotocol::ScreenSize;
 
 pub mod api;
 pub mod util;

@@ -1,13 +1,11 @@
 pub mod error;
 mod net_state;
-pub mod packet;
 mod connection_state;
 pub mod handle;
 
 use crate::net::error::UnixSocketError;
 use crate::net::handle::{ControlMessage, NetHandle};
 use crate::net::net_state::ServerState;
-use crate::net::packet::Packet;
 use std::fs;
 use std::os::unix::net::UnixListener;
 use std::path::Path;
@@ -16,8 +14,9 @@ use std::sync::mpsc::{channel, Receiver};
 use std::sync::{Arc, Mutex};
 use std::thread::{self};
 use std::time::Duration;
+use libprotocol::{Packet, WINDOW_UNIX_SOCKET_NAME};
 
-const WINDOW_UNIX_SOCKET_NAME: &'static str = "/tmp/prism_comp";
+
 pub type Result<T> = std::result::Result<T, UnixSocketError>;
 
 pub trait PacketHandler: Send {

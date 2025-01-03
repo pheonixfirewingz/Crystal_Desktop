@@ -1,12 +1,12 @@
 #![feature(random)]
 
-use crate::net::packet::Packet;
 use crate::net::{CompositorServer, PacketHandler};
 use crate::window::display_manager::DisplayServer;
 use crate::window::window::Window;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, RwLock};
+use libprotocol::Packet;
 
 mod common;
 mod debug_screen;
@@ -50,7 +50,7 @@ impl PacketHandler for Prism {
                 self.id_map.insert(window_id,id);
                 return Ok(Option::from(Packet::CreateSuccess { window_id }));
             }
-            Packet::RequestWindowPosition { window_id} => {
+            /*Packet::RequestWindowPosition { window_id} => {
                 let dm = self.display.read().unwrap();
                 let pos = dm.get_window_pos(&self.id_map[&window_id]);
                 return Ok(Option::from(Packet::Position {x:pos.x,y:pos.y}));
@@ -63,7 +63,7 @@ impl PacketHandler for Prism {
             Packet::Paint { window_id, buffer} => {
                 let mut  dm = self.display.write().unwrap();
                 dm.update_window_frame_buffer(&self.id_map[&window_id], &buffer);
-            }
+            }*/
             Packet::Close { window_id } => {
                 let mut dm = self.display.write().unwrap();
                 dm.remove_window(&self.id_map[&window_id]);

@@ -1,9 +1,9 @@
 use crate::common::mouse::Mouse;
-use crate::common::ScreenSize;
 use crate::render::Renderer;
 use crate::window::window::{Window, WINDOW_PADDING};
 use std::collections::HashMap;
 use std::hash::{DefaultHasher, Hash, Hasher};
+use libprotocol::ScreenSize;
 use crate::render::api::texture::Texture;
 use crate::render::util::rect::{Position, Rect, Size};
 

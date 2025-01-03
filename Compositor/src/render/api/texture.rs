@@ -1,6 +1,6 @@
-use crate::common::ScreenSize;
 use gl::types::{GLint, GLuint};
 use std::ptr;
+use libprotocol::ScreenSize;
 
 pub struct Texture {
     texture_id: GLuint,

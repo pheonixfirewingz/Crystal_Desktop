@@ -2,6 +2,7 @@ use crate::window::display_manager::DisplayServer;
 use std::sync::atomic::{AtomicBool};
 use std::sync::{Arc, RwLock};
 use glfw::Context;
+use libprotocol::ScreenSize;
 
 pub fn start_screen(dm_server: Arc<RwLock<DisplayServer>>, shutdown: Arc<AtomicBool>) {
     #[cfg(debug_assertions)]
@@ -35,7 +36,7 @@ pub fn start_screen(dm_server: Arc<RwLock<DisplayServer>>, shutdown: Arc<AtomicB
         let mut dm = dm_server
             .write()
             .expect("Failed to get dm_server write lock");
-        dm.setup_renderer(width as crate::common::ScreenSize, height as crate::common::ScreenSize);
+        dm.setup_renderer(width as ScreenSize, height as ScreenSize);
     }
     window.set_all_polling(true);
     let target_frame_time = std::time::Duration::from_secs(1) / 60;
@@ -56,8 +57,8 @@ pub fn start_screen(dm_server: Arc<RwLock<DisplayServer>>, shutdown: Arc<AtomicB
                     // Calculate relative position
                     let relative_mouse_pos = (x - last_mouse_pos.0, y - last_mouse_pos.1);
                     dm.update_mouse_pos(
-                        relative_mouse_pos.0 as crate::common::ScreenSize,
-                        relative_mouse_pos.1 as crate::common::ScreenSize,
+                        relative_mouse_pos.0 as ScreenSize,
+                        relative_mouse_pos.1 as ScreenSize,
                     );
                     // Update the last mouse position
                     last_mouse_pos = (x, y);

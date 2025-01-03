@@ -33,7 +33,7 @@
 //! window.restore();
 //! ```
 
-use crate::common::ScreenSize;
+use libprotocol::ScreenSize;
 use crate::render::api::texture::Texture;
 use crate::render::util::rect::{Position, Rect, Size};
 
