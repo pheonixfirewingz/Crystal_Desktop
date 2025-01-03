@@ -5,4 +5,4 @@ authors.workspace = true
 edition.workspace = true
 
 [dependencies]
-lib_crystal_matrix = {path = "../LibCrystalMatrix"}
+libcrystalmatrix = {path = "../LibCrystalMatrix"}
