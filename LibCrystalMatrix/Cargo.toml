@@ -1,5 +1,5 @@
 [package]
-name = "lib_crystal_matrix"
+name = "libcrystalmatrix"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -8,6 +8,6 @@ edition.workspace = true
 crate-type = ["rlib"]
 
 [dependencies]
-serde = { version = "1.0.216", features = ["derive"] }
+libprotocol = { path = "../LibProtocal"}
 lazy_static = "1.5.0"
-bincode = "1.3.3"
+
